@@ -5,20 +5,44 @@
 - After cloning the repo, open the terminal into the repo's directory.
   - Install it by running
 
-        pip3 install .
+```bash
+python3 -m pip install .
+```
+
+- Install sshpass by running
+
+```bash
+sudo apt-get install sshpass
+```
 
 ## Usage
 
-- Add a account by running
+### Add an account
 
-        git-account --add
+```bash
+git-account --add
+```
 
-  - Follow the instructions to setup the account
+### Switch accounts
+  
+```bash
+git-account --switch <name-of-account>
+```
 
-- Switch to account using
+### List accounts
 
-        git-account --switch <name-of-account>
+```bash
+git-account --list
+```
 
-- See saved accounts by running
+### Switch account on remote device
 
-        git-account --list
+```bash
+git-account --switch <name-of-account> --remote <hostname> <username>
+```
+
+- Additionally if you have your ssh keys setup for that device you can use ```--no-password``` to avoid entering the password
+
+```bash
+git-account --switch <name-of-account> --remote <hostname> <username> --no-password
+```

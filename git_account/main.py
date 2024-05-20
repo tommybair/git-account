@@ -21,15 +21,18 @@ class GitCredentials:
         self.email = email
         self.account_nickname  = account_nickname if account_nickname is not None else username
 
-    def save(self, path: str):
+    def save(self, path: str) -> None:
         with open(os.path.join(path, f"{self.account_nickname}.pkl"), 'wb') as file:
             pickle.dump(self, file)
 
-    def write(self, path: str):
+    def write(self, path: str) -> None:
         with open(os.path.join(path, ".git-credentials"), 'w') as git_credentials:
             git_credentials.write(self.generate_credential_string())
         with open(os.path.join(path, ".gitconfig"), 'w') as gitconfig:
             gitconfig.write(self.generate_git_config_string())
+
+    def write_to_str(self) -> tuple[str, str]:
+        return self.generate_credential_string(), self.generate_git_config_string()
 
     def generate_credential_string(self):
         return f"https://{self.username}:{self.pat}@github.com"
@@ -114,6 +117,7 @@ def add_parser(parser: ArgumentParser):
                         default=False)
 
     parser.add_argument("--add",
+                        "-a",
                         help="Adds an github account",
                         action="store_true",
                         default=False)
@@ -129,7 +133,42 @@ def add_parser(parser: ArgumentParser):
                         type=str,
                         default=os.path.join(str(Path.home()), ".git-accounts")
                         )
+    
+    parser.add_argument("--remote",
+                        "-r",
+                        help="Switches credentials on remote device. Arguments are hostname, username to switch to.",
+                        nargs=2,
+                        type=str,
+                        default=None
+                        )
+    
+    parser.add_argument("--no-password",
+                        "-np",
+                        help="Does not prompt for password",
+                        action="store_true",
+                        default=False
+                        )
 
+def switch_on_remote(args: Namespace, accounts: List[GitCredentials]):
+
+    for account in accounts:
+        if account.account_nickname == args.switch:
+            credentials: GitCredentials = account
+            break
+    else:
+        raise Exception(f"'{args.args.switch}' not found in accounts. Use --list or -l to list accounts")
+    
+    credentials_str, config_str = credentials.write_to_str()
+
+    if args.no_password:
+        os.system(f"ssh {args.remote[1]}@{args.remote[0]} 'echo \"{credentials_str}\" > ~/.git-credentials'")
+        os.system(f"ssh {args.remote[1]}@{args.remote[0]} 'echo \"{config_str}\" > ~/.gitconfig'")
+    else:
+        password = getpass.getpass(f"Enter password for {args.switch_on_remote[1]}@{args.switch_on_remote[0]}: ")
+
+
+        os.system(f"sshpass -p {password} ssh {args.remote[1]}@{args.remote[0]} 'echo \"{credentials_str}\" > ~/.git-credentials'")
+        os.system(f"sshpass -p {password} ssh {args.remote[1]}@{args.remote[0]} 'echo \"{config_str}\" > ~/.gitconfig'")
 
 def switch(args: Namespace, accounts: List[GitCredentials]):
     names = [account.account_nickname for account in accounts]
@@ -162,4 +201,7 @@ def main():
     if args.add:
         add(args, accounts)
     if args.switch is not None:
-        switch(args, accounts)
+        if args.remote is None:
+            switch(args, accounts)
+        else:
+            switch_on_remote(args, accounts)
