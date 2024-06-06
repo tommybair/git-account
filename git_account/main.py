@@ -164,7 +164,7 @@ def switch_on_remote(args: Namespace, accounts: List[GitCredentials]):
         os.system(f"ssh {args.remote[1]}@{args.remote[0]} 'echo \"{credentials_str}\" > ~/.git-credentials'")
         os.system(f"ssh {args.remote[1]}@{args.remote[0]} 'echo \"{config_str}\" > ~/.gitconfig'")
     else:
-        password = getpass.getpass(f"Enter password for {args.switch_on_remote[1]}@{args.switch_on_remote[0]}: ")
+        password = getpass.getpass(f"Enter password for {args.remote[1]}@{args.remote[0]}: ")
 
 
         os.system(f"sshpass -p {password} ssh {args.remote[1]}@{args.remote[0]} 'echo \"{credentials_str}\" > ~/.git-credentials'")
