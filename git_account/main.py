@@ -123,7 +123,7 @@ def add_parser(parser: ArgumentParser):
                         default=False)
 
     parser.add_argument("--path",
-                        help="Path folder with .git-credential. Default is '~/'",
+                        help="Path folder with .git-credential file. Default is '~/'",
                         type=str,
                         default=str(Path.home())
                         )
@@ -147,6 +147,13 @@ def add_parser(parser: ArgumentParser):
                         help="Does not prompt for password",
                         action="store_true",
                         default=False
+                        )
+    
+    parser.add_argument("--copy-to-local",
+                        "-c",
+                        help="Copies specified account current working directory. Useage: git_account -c <account_name>",
+                        type=str,
+                        default=None
                         )
 
 def switch_on_remote(args: Namespace, accounts: List[GitCredentials]):
@@ -205,3 +212,15 @@ def main():
             switch(args, accounts)
         else:
             switch_on_remote(args, accounts)
+    if args.copy_to_local is not None:
+        for account in accounts:
+            if account.account_nickname == args.copy_to_local:
+                account.write(os.getcwd())
+                os.system(f"git config --local user.name {account.name}")
+                os.system(f"git config --local user.email {account.email}")
+                os.system(f"git config --local credential.helper 'store --file .git-credentials'")
+                break
+        
+        else:
+            print(f"'{args.copy_to_local}' not found in accounts. Use --list or -l to list accounts")
+            exit(1)
